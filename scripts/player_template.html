@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --line: #e3e3e0;
+  --accent: #0a66c2; --active: #e8f1fb; --mark: #ffe58a; --bm: #b5530a; --bmbg: #fdf1e6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161617; --panel: #1f1f21; --text: #ececec; --muted: #9a9aa0; --line: #313134;
+    --accent: #5aa9ff; --active: #1d3046; --mark: #7a6420; --bm: #f0a35e; --bmbg: #3a2a1c;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 15px/1.6 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", sans-serif;
+  display: flex; flex-direction: column;
+}
+header {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+header .meta { color: var(--muted); font-size: 13px; }
+header .spacer { flex: 1; }
+header .warn { color: var(--bm); cursor: help; }
+.search { display: flex; align-items: center; gap: 6px; }
+.search input {
+  width: 220px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--text); font: inherit; font-size: 14px;
+}
+.search .count { color: var(--muted); font-size: 13px; min-width: 52px; }
+button, select {
+  font: inherit; font-size: 13px; color: var(--text); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+label.toggle { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+main { flex: 1; display: flex; min-height: 0; }
+.left {
+  width: 58%; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-height: 0;
+  border-right: 1px solid var(--line);
+}
+video { width: 100%; max-height: 72vh; background: #000; border-radius: 8px; }
+video.audio-only { height: 54px; background: transparent; }
+.notice { color: var(--bm); font-size: 13px; display: none; }
+.bookmarks h2, .help h2 { font-size: 13px; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  background: var(--bmbg); color: var(--bm); border: none; border-radius: 999px; padding: 3px 10px;
+}
+.help { font-size: 12px; color: var(--muted); margin-top: auto; }
+.help kbd {
+  font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-radius: 4px;
+  padding: 0 4px; background: var(--panel);
+}
+.right { flex: 1; overflow-y: auto; padding: 8px 0; background: var(--panel); }
+.seg {
+  display: flex; gap: 10px; padding: 5px 16px; cursor: pointer; border-left: 3px solid transparent;
+}
+.seg:hover { background: var(--bg); }
+.seg.active { background: var(--active); border-left-color: var(--accent); }
+.seg.dim { opacity: .35; }
+.seg.low .x { color: var(--muted); }
+.seg.low .x::before { content: "⚠️ "; }
+.seg .t {
+  font: 12px/1.9 ui-monospace, Menlo, monospace; color: var(--accent); flex: none; min-width: 64px;
+}
+.seg .x { flex: 1; }
+mark { background: var(--mark); color: inherit; border-radius: 2px; }
+mark.current { outline: 2px solid var(--accent); }
+.bm-row {
+  margin: 6px 16px; padding: 3px 10px; border-radius: 6px; background: var(--bmbg); color: var(--bm);
+  font-size: 13px; cursor: pointer;
+}
+.empty { padding: 24px 16px; color: var(--muted); }
+@media (max-width: 860px) {
+  main { flex-direction: column; }
+  .left { width: 100%; border-right: none; border-bottom: 1px solid var(--line); }
+  .help { display: none; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title"></h1>
+  <span class="meta" id="meta"></span>
+  <span class="spacer"></span>
+  <div class="search">
+    <input id="q" type="search" placeholder="搜尋逐字稿（Enter 下一個）" autocomplete="off">
+    <span class="count" id="count"></span>
+    <button id="prev" title="上一個（Shift+Enter）">↑</button>
+    <button id="next" title="下一個（Enter）">↓</button>
+  </div>
+  <select id="rate" title="播放速度">
+    <option value="1">1×</option><option value="1.25">1.25×</option>
+    <option value="1.5">1.5×</option><option value="2">2×</option>
+  </select>
+  <label class="toggle"><input type="checkbox" id="follow" checked> 自動捲動</label>
+</header>
+<main>
+  <section class="left">
+    <video id="v" src="recording.mp4" controls preload="metadata"></video>
+    <div class="notice" id="notice">找不到 recording.mp4：player.html 要跟影片放在同一個資料夾。</div>
+    <div class="bookmarks" id="bmbox">
+      <h2>書籤</h2>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="help">
+      <h2>快捷鍵</h2>
+      <kbd>空白</kbd> 播放／暫停　<kbd>←</kbd><kbd>→</kbd> 前後 5 秒　<kbd>/</kbd> 搜尋　<kbd>Esc</kbd> 清除搜尋<br>
+      點左邊時間或句子會跳到該秒並播放。
+    </div>
+  </section>
+  <section class="right" id="list"></section>
+</main>
+<script id="data" type="application/json">/*__DATA__*/null</script>
+<script>
+(function () {
+  "use strict";
+  var DATA = JSON.parse(document.getElementById("data").textContent || "null") ||
+             { meta: {}, bookmarks: [], segments: [] };
+  var segs = DATA.segments || [];
+  var bms = DATA.bookmarks || [];
+  var v = document.getElementById("v");
+  var list = document.getElementById("list");
+  var q = document.getElementById("q");
+  var count = document.getElementById("count");
+  var follow = document.getElementById("follow");
+
+  function hms(t) {
+    t = Math.max(0, Math.floor(t));
+    var h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = t % 60;
+    return (h ? h + ":" : "") + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+  function esc(s) {
+    return s.replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  // ---- 標題列
+  var meta = DATA.meta || {};
+  document.getElementById("title").textContent = meta.name || document.title;
+  var when = (meta.started_at || "").replace("T", " ").slice(0, 16);
+  document.getElementById("meta").textContent =
+    [when, meta.duration ? "長度 " + hms(meta.duration) : "", meta.mode || "", segs.length + " 句"]
+      .filter(Boolean).join("　·　");
+  if ((meta.warnings || []).length) {
+    var w = document.createElement("span");
+    w.className = "meta warn";
+    w.textContent = "⚠️ " + meta.warnings.length + " 則注意事項";
+    w.title = meta.warnings.join("\n");
+    document.getElementById("meta").after(w);
+  }
+
+  function seek(t, play) {
+    v.currentTime = Math.max(0, t);
+    onTime();   // 不等 seeked 事件，點下去就先高亮
+    if (play !== false) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+  }
+
+  // ---- 書籤
+  var chips = document.getElementById("chips");
+  if (!bms.length) document.getElementById("bmbox").style.display = "none";
+  bms.forEach(function (b) {
+    var c = document.createElement("button");
+    c.className = "chip";
+    c.textContent = "🔖 " + hms(b.t) + " " + b.label;
+    c.onclick = function () { seek(b.t); };
+    chips.appendChild(c);
+  });
+
+  // ---- 逐字稿列表（書籤插在對應時間的句子前）
+  var rows = [];
+  var bi = 0;
+  var frag = document.createDocumentFragment();
+  function addBm(b) {
+    var r = document.createElement("div");
+    r.className = "bm-row";
+    r.textContent = "🔖 " + hms(b.t) + "　" + b.label;
+    r.onclick = function () { seek(b.t); };
+    frag.appendChild(r);
+  }
+  segs.forEach(function (s, i) {
+    while (bi < bms.length && bms[bi].t <= s.start) addBm(bms[bi++]);
+    var r = document.createElement("div");
+    r.className = s.low ? "seg low" : "seg";
+    if (s.low) r.title = "辨識信心很低，請對照影片";
+    r.innerHTML = '<span class="t">' + hms(s.start) + '</span><span class="x"></span>';
+    r.querySelector(".x").textContent = s.text;
+    r.onclick = function () { seek(s.start); };
+    frag.appendChild(r);
+    rows.push(r);
+  });
+  while (bi < bms.length) addBm(bms[bi++]);
+  if (!segs.length) {
+    var e = document.createElement("div");
+    e.className = "empty";
+    e.textContent = "這段錄音沒有辨識出文字。";
+    frag.appendChild(e);
+  }
+  list.appendChild(frag);
+
+  // ---- 播放時高亮目前那句
+  var current = -1;
+  function indexAt(t) {   // 最後一個 start <= t 的句子（二分搜尋）
+    var lo = 0, hi = segs.length - 1, ans = -1;
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1;
+      if (segs[mid].start <= t + 0.05) { ans = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    return ans;
+  }
+  function onTime() {
+    var i = indexAt(v.currentTime);
+    if (i === current) return;
+    if (current >= 0 && rows[current]) rows[current].classList.remove("active");
+    current = i;
+    if (i >= 0) {
+      rows[i].classList.add("active");
+      if (follow.checked) rows[i].scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }
+  v.addEventListener("timeupdate", onTime);
+  v.addEventListener("seeked", onTime);
+  v.addEventListener("loadedmetadata", function () {
+    if (!v.videoWidth) v.classList.add("audio-only");
+  });
+  v.addEventListener("error", function () {
+    document.getElementById("notice").style.display = "block";
+  });
+  document.getElementById("rate").onchange = function (e) { v.playbackRate = Number(e.target.value); };
+
+  // ---- 搜尋
+  var hits = [], hitPos = -1;
+  function runSearch() {
+    var term = q.value.trim();
+    hits = []; hitPos = -1;
+    rows.forEach(function (r, i) {
+      var x = r.querySelector(".x"), text = segs[i].text;
+      if (!term) { x.textContent = text; r.classList.remove("dim"); return; }
+      var lower = text.toLowerCase(), t = term.toLowerCase();
+      if (lower.indexOf(t) < 0) { x.textContent = text; r.classList.add("dim"); return; }
+      var out = "", from = 0, k;
+      while ((k = lower.indexOf(t, from)) >= 0) {
+        out += esc(text.slice(from, k)) + "<mark>" + esc(text.slice(k, k + t.length)) + "</mark>";
+        from = k + t.length;
+      }
+      x.innerHTML = out + esc(text.slice(from));
+      r.classList.remove("dim");
+      hits.push(i);
+    });
+    count.textContent = term ? (hits.length ? hits.length + " 句" : "0 句") : "";
+    if (hits.length) go(0);
+  }
+  function go(p) {
+    if (!hits.length) return;
+    hitPos = (p + hits.length) % hits.length;
+    document.querySelectorAll("mark.current").forEach(function (m) { m.classList.remove("current"); });
+    var r = rows[hits[hitPos]];
+    var m = r.querySelector("mark");
+    if (m) m.classList.add("current");
+    r.scrollIntoView({ block: "center" });
+    count.textContent = (hitPos + 1) + " / " + hits.length;
+  }
+  var timer;
+  q.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(runSearch, 120); });
+  q.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); go(hitPos + (e.shiftKey ? -1 : 1)); }
+    if (e.key === "Escape") { q.value = ""; runSearch(); q.blur(); }
+  });
+  document.getElementById("next").onclick = function () { go(hitPos + 1); };
+  document.getElementById("prev").onclick = function () { go(hitPos - 1); };
+
+  // ---- 鍵盤
+  document.addEventListener("keydown", function (e) {
+    if (e.target === q || e.metaKey || e.ctrlKey || e.altKey) return;
+    // 焦點在影片或表單元件上時交給瀏覽器原生處理，避免按一次空白觸發兩次
+    if (/^(SELECT|INPUT|VIDEO|BUTTON)$/.test(e.target.tagName)) return;
+    if (e.key === " ") { e.preventDefault(); v.paused ? v.play() : v.pause(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); seek(v.currentTime - 5, false); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); seek(v.currentTime + 5, false); }
+    else if (e.key === "/") { e.preventDefault(); q.focus(); q.select(); }
+  });
+})();
+</script>
+</body>
+</html>

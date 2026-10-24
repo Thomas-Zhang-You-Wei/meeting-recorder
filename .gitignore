@@ -1,0 +1,27 @@
+# 編譯產物
+build/
+.build/
+
+# 錄音、錄影與產出一律不進 git（會議內容屬機密）
+*.mp4
+*.mov
+*.m4a
+*.caf
+*.wav
+*.aiff
+*.mp3
+*.srt
+transcript.*
+player.html
+session.json
+process.log
+recordings/
+output/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+.DS_Store

@@ -1,0 +1,38 @@
+# Meeting Recorder 術語表（範例）
+# 一行一個詞，# 開頭是註解。會被串成 Whisper 的 initial prompt，
+# 讓它更容易把這些詞聽對、拼對。請換成你的會議裡常講的詞。
+# 注意：
+# - Whisper 的 prompt 上限約 220 個 token，詞太多時「最前面」的會被截掉，
+#   只放「常講又常被聽錯」的就好。
+# - 目前術語表只對錄音開頭約 30 秒有效（詳見 README「已知限制」）。
+
+API
+backend
+frontend
+database
+deploy
+release
+bug
+pull request
+GitHub
+Python
+JavaScript
+Docker
+cloud
+latency
+throughput
+machine learning
+LLM
+prompt
+dataset
+demo
+prototype
+roadmap
+milestone
+deadline
+KPI
+feedback
+專案
+進度
+報告
+會議記錄
